@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: springboot-webflux 
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: springboot-webflux
+  template:
+    metadata:
+     labels:
+       app: springboot-webflux 
+    spec:
+      containers:
+      -  name: springboot-webflux 
+         image: springboot-webflux:1.0
+         imagePullPolicy: IfNotPresent
+        #readinessProbe:
+        #   httpGet:
+        #     path: /swagger-doc/v3/api-docs
+        #     port: 8080
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+         resources:
+            requests:
+              memory: 1000Mi
+              cpu: 100m
+            limits:
+              memory: 1200Mi
+              cpu: 200m
+         ports:
+           - containerPort: 8080 
+         env:
+           - name: DB_USERNAME
+             valueFrom:
+               secretKeyRef:
+                  name: mongodb-secret 
+                  key: mongo-root-username
+           - name: DB_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                  name: mongodb-secret 
+                  key: mongo-root-password
+           - name: DB_URL
+             valueFrom:
+               configMapKeyRef:
+                  name: mongodb-configmap
+                  key: database_url
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: springboot-webflux-service 
+spec:
+  selector:
+    app: springboot-webflux
+  type: LoadBalancer
+  ports:
+   - protocol: TCP 
+     port: 8080
+     targetPort: 8080
+     nodePort: 30040
